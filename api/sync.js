@@ -118,7 +118,7 @@ export default async function handler(req, res) {
   // -------- 3b. Optional fallback: HenrikDev (unofficial) --------
   if (matchDataStatus === "riot_production_required" && HENRIKDEV_ENABLED && HENRIKDEV_API_KEY) {
     try {
-      const region = "na";
+      const region = process.env.RIOT_PLATFORM_SHARD || "na";
       const hRes = await fetch(
         `https://api.henrikdev.xyz/valorant/v4/matches/${region}/pc/${encodeURIComponent(
           gameName
