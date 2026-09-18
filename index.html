@@ -1,0 +1,959 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VALO INSIGHT — Perfil do Jogador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c10;
+    --bg-raised: #121319;
+    --bg-card: #15161d;
+    --line: #23252f;
+    --line-soft: #1a1b23;
+    --ink: #f2f3f5;
+    --ink-dim: #9a9da8;
+    --ink-faint: #5c5f6b;
+    --red: #ff3b4e;
+    --red-soft: rgba(255,59,78,0.12);
+    --cyan: #4fd6e8;
+    --amber: #ffb454;
+  }
+  :root:not([data-theme="light"]) { color-scheme: dark; }
+  :root[data-theme="light"] {
+    --bg: #f4f4f6; --bg-raised: #ffffff; --bg-card: #ffffff;
+    --line: #e2e3e8; --line-soft: #ececef; --ink: #14151a;
+    --ink-dim: #55575f; --ink-faint: #9297a1;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .display { font-family: 'Rajdhani', 'Inter', sans-serif; font-weight: 700; letter-spacing: 0.01em; }
+  .mono-label { font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.09em; color: var(--ink-faint); text-transform: uppercase; }
+  a { color: inherit; }
+  button { font-family: inherit; cursor: pointer; }
+  .view { display: none; min-height: 100vh; }
+  .view.active { display: block; }
+
+  /* ---------- Home ---------- */
+  #view-home { display: flex; flex-direction: column; }
+  .home-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px clamp(20px, 5vw, 56px);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--red), #b8202f);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani'; font-weight: 700; color: white; font-size: 15px;
+  }
+  .brand-name { font-family: 'Rajdhani'; font-weight: 700; font-size: 18px; letter-spacing: 0.02em; }
+  .brand-name span { color: var(--red); }
+  .beta-tag {
+    font-size: 11px; padding: 4px 9px; border-radius: 5px;
+    border: 1px solid var(--line); color: var(--ink-dim); letter-spacing: 0.05em;
+  }
+  .home-hero {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 40px 20px 80px;
+    position: relative;
+  }
+  .home-hero::before {
+    content: ''; position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+    width: 640px; height: 320px; max-width: 90vw;
+    background: radial-gradient(ellipse at center, var(--red-soft), transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow { color: var(--red); font-family: 'Rajdhani'; font-weight: 600; letter-spacing: 0.08em; font-size: 14px; margin-bottom: 18px; }
+  .hero-title {
+    font-size: clamp(2.4rem, 6vw, 4.4rem); line-height: 1.02; max-width: 780px;
+    position: relative;
+  }
+  .hero-title em { font-style: normal; color: var(--red); }
+  .hero-sub { color: var(--ink-dim); font-size: 1.08rem; max-width: 480px; margin-top: 18px; line-height: 1.5; }
+  .id-form { margin-top: 40px; width: 100%; max-width: 420px; position: relative; }
+  .id-row { display: flex; gap: 8px; }
+  .id-input {
+    background: var(--bg-raised); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 8px; padding: 14px 16px; font-size: 14px; outline: none;
+    transition: border-color .15s;
+  }
+  .id-input:focus { border-color: var(--red); }
+  .id-input.name { flex: 1; }
+  .id-input.tag { width: 96px; }
+  .btn-analyze {
+    width: 100%; margin-top: 10px; background: var(--red); color: white; border: none;
+    font-family: 'Rajdhani'; font-weight: 700; font-size: 15px; letter-spacing: 0.04em;
+    padding: 15px; border-radius: 8px; transition: background .15s, transform .1s;
+  }
+  .btn-analyze:hover { background: #ff5266; }
+  .btn-analyze:active { transform: scale(0.99); }
+  .form-note { color: var(--ink-faint); font-size: 12px; margin-top: 12px; }
+  .form-error { color: var(--red); font-size: 13px; margin-top: 10px; text-align: left; }
+  .demo-note {
+    margin-top: 26px; font-size: 12px; color: var(--ink-faint);
+    border: 1px dashed var(--line); border-radius: 8px; padding: 10px 14px; max-width: 420px;
+  }
+
+  /* ---------- Loading ---------- */
+  #view-loading { display: none; align-items: center; justify-content: center; flex-direction: column; }
+  #view-loading.active { display: flex; }
+  .spinner {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid var(--line); border-top-color: var(--red);
+    animation: spin 0.9s linear infinite; margin-bottom: 22px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-msg { color: var(--ink-dim); font-size: 14px; letter-spacing: 0.02em; }
+
+  /* ---------- Dashboard ---------- */
+  #view-dashboard.active { display: block; }
+  .dash-header {
+    display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
+    padding: 18px clamp(18px, 4vw, 44px); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; background: rgba(11,12,16,0.9); backdrop-filter: blur(10px); z-index: 10;
+  }
+  :root[data-theme="light"] .dash-header { background: rgba(244,244,246,0.9); }
+  .id-block { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%; background: var(--bg-card);
+    border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani'; font-weight: 700; font-size: 16px;
+  }
+  .id-name { font-weight: 600; font-size: 15px; }
+  .id-name .tag { color: var(--ink-faint); font-weight: 400; }
+  .id-meta { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-faint); }
+  .source-pill {
+    border: 1px solid var(--line); border-radius: 20px; padding: 5px 11px; font-size: 11px; color: var(--ink-dim);
+  }
+  .btn-share {
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    padding: 8px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  }
+  .btn-share:hover { border-color: var(--red); color: var(--red); }
+
+  .dash-main { max-width: 1180px; margin: 0 auto; padding: 34px clamp(18px, 4vw, 44px) 90px; }
+  .section { margin-bottom: 46px; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
+
+  .style-hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 28px; align-items: end; margin-bottom: 8px; }
+  @media (max-width: 760px) { .style-hero { grid-template-columns: 1fr; } }
+  .style-kicker { color: var(--ink-faint); font-size: 13px; margin-bottom: 6px; }
+  .style-label { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+  .style-rationale { color: var(--ink-dim); font-size: 14.5px; max-width: 480px; margin-top: 8px; line-height: 1.55; }
+  .rank-block { text-align: right; }
+  @media (max-width: 760px) { .rank-block { text-align: left; } }
+  .rank-tier { font-size: 1.4rem; }
+  .rank-rr { color: var(--ink-faint); font-size: 13px; }
+
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; }
+  .metric-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .metric-card .mono-label { margin-bottom: 6px; }
+  .metric-value { font-family: 'Rajdhani'; font-size: 1.7rem; font-weight: 700; }
+  .metric-value .unit { color: var(--ink-faint); font-size: 0.9rem; font-weight: 500; }
+  .unavailable-note { font-size: 12px; color: var(--ink-faint); margin-top: 12px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+  .panel { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+  .panel-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .panel-title h3 { margin: 0; font-family: 'Rajdhani'; font-weight: 700; font-size: 16px; letter-spacing: 0.02em; }
+  .tag-note { font-size: 10.5px; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 20px; padding: 3px 9px; }
+
+  .ai-block p { color: var(--ink-dim); font-size: 13.5px; line-height: 1.6; margin: 0 0 14px; }
+  .ai-sub { color: var(--ink-faint); font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .ai-list { margin: 0 0 16px; padding-left: 18px; color: var(--ink-dim); font-size: 13.5px; line-height: 1.65; }
+  .confidence-line { font-size: 11.5px; color: var(--ink-faint); border-top: 1px solid var(--line-soft); padding-top: 12px; }
+
+  .trend-toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toolbar-btn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-dim);
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; transition: all .15s;
+  }
+  .toolbar-btn.active { background: var(--red); border-color: var(--red); color: white; }
+  .metric-toggle { display: flex; gap: 4px; margin-top: 12px; margin-bottom: 6px; }
+  .metric-toggle button {
+    border: none; background: transparent; color: var(--ink-faint); font-size: 11px;
+    padding: 4px 8px; border-radius: 5px; letter-spacing: 0.03em;
+  }
+  .metric-toggle button.active { background: var(--line-soft); color: var(--ink); }
+
+  table.agent-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.agent-table th {
+    text-align: left; color: var(--ink-faint); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 0 12px 10px 0; border-bottom: 1px solid var(--line);
+  }
+  table.agent-table td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--line-soft); color: var(--ink-dim); }
+  table.agent-table tr:last-child td { border-bottom: none; }
+  table.agent-table td.name { color: var(--ink); font-weight: 600; }
+  .badge-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; margin-bottom: 16px; }
+  .badge-card { background: var(--bg-raised); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .badge-card .mono-label { margin-bottom: 4px; }
+  .badge-card .val { font-family: 'Rajdhani'; font-weight: 700; font-size: 1.05rem; }
+
+  .map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .map-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .map-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .map-card-head h4 { margin: 0; font-family: 'Rajdhani'; font-weight: 700; font-size: 15.5px; }
+  .map-stat-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 5px 0; color: var(--ink-dim); }
+  .map-stat-row b { color: var(--ink); font-weight: 600; }
+  .low-sample { font-size: 11px; color: var(--ink-faint); margin-top: 8px; }
+
+  /* Share modal */
+  #share-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none;
+    align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  #share-overlay.active { display: flex; }
+  .share-card {
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 16px;
+    width: 100%; max-width: 360px; padding: 30px 26px; text-align: center; position: relative;
+  }
+  .share-close {
+    position: absolute; top: 14px; right: 14px; background: transparent; border: none;
+    color: var(--ink-faint); font-size: 18px; line-height: 1;
+  }
+  .share-avatar {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--bg-raised); border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;
+    font-family: 'Rajdhani'; font-weight: 700; font-size: 24px;
+  }
+  .share-rank { color: var(--ink-faint); font-size: 12.5px; margin-top: 3px; }
+  .share-style { color: var(--red); font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 0.03em; margin-top: 12px; font-size: 14px; }
+  .share-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 20px; }
+  .share-grid > div, .share-grid2 > div { text-align: center; }
+  .share-grid2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-top: 10px; }
+  .share-grid .label, .share-grid2 .label { font-size: 10.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+  .share-grid .val, .share-grid2 .val { font-family: 'Rajdhani'; font-weight: 700; font-size: 1.1rem; margin-top: 2px; }
+  .btn-copy {
+    width: 100%; margin-top: 22px; background: var(--red); color: white; border: none;
+    padding: 13px; border-radius: 8px; font-family: 'Rajdhani'; font-weight: 700; letter-spacing: 0.03em;
+  }
+  .copied-toast { font-size: 12px; color: var(--cyan); margin-top: 10px; height: 14px; }
+
+  .footer-note { text-align: center; color: var(--ink-faint); font-size: 11.5px; padding: 30px 20px 0; }
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<div id="view-home" class="view active">
+  <nav class="home-nav">
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div class="brand-name">VALO<span>INSIGHT</span></div>
+    </div>
+    <div class="beta-tag">DEMONSTRAÇÃO</div>
+  </nav>
+
+  <div class="home-hero">
+    <div class="hero-eyebrow">ANÁLISE DE DESEMPENHO · VALORANT</div>
+    <h1 class="display hero-title">Conheça seu <em>VALORANT</em> de verdade.</h1>
+    <p class="hero-sub">Informe um Riot ID para gerar um perfil completo do seu estilo de jogo, agentes, mapas e evolução.</p>
+
+    <form class="id-form" id="analyze-form">
+      <div class="id-row">
+        <input class="id-input name" id="input-name" placeholder="Riot ID" autocomplete="off" />
+        <input class="id-input tag" id="input-tag" placeholder="Tag" autocomplete="off" />
+      </div>
+      <div class="form-error" id="form-error" style="display:none;"></div>
+      <button type="submit" class="btn-analyze display">ANALISAR MEU PERFIL</button>
+      <button type="button" id="btn-demo-mode" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--line);color:var(--ink-dim);border-radius:8px;padding:12px;font-size:13px;">
+        Ver com dados de demonstração (sem chamar a Riot)
+      </button>
+      <p class="form-note">"Analisar meu perfil" chama a função serverless real (/api/sync), configurada com suas chaves na Vercel.</p>
+    </form>
+
+    <div class="demo-note">
+      Este build já tenta a integração real: identidade do jogador e catálogo de agentes/mapas vêm direto da Riot. Histórico de partidas depende de acesso de produção aprovado (ou de um fallback opcional) — veja README-DEPLOY.md.
+    </div>
+  </div>
+</div>
+
+<!-- ================= LOADING ================= -->
+<div id="view-loading" class="view">
+  <div class="spinner"></div>
+  <div class="loading-msg" id="loading-msg">Conectando ao seu perfil…</div>
+</div>
+
+<!-- ================= CONNECTION STATUS (real Riot data but match history blocked) ================= -->
+<div id="view-status" class="view">
+  <div style="max-width:520px;margin:0 auto;padding:60px 20px;text-align:center;">
+    <div class="brand" style="justify-content:center;margin-bottom:30px;">
+      <div class="brand-mark">V</div>
+      <div class="brand-name">VALO<span>INSIGHT</span></div>
+    </div>
+    <div class="panel" style="text-align:left;">
+      <div class="panel-title"><h3>Conexão com a Riot</h3><span class="tag-note" id="status-badge">verificando</span></div>
+      <div style="font-size:13.5px;color:var(--ink-dim);line-height:1.7;" id="status-body"></div>
+    </div>
+    <button class="btn-analyze display" id="btn-status-demo" style="margin-top:20px;">
+      VER DASHBOARD COM DADOS DE DEMONSTRAÇÃO
+    </button>
+    <button type="button" id="btn-status-back" style="width:100%;margin-top:8px;background:transparent;border:1px solid var(--line);color:var(--ink-dim);border-radius:8px;padding:12px;font-size:13px;">
+      Voltar
+    </button>
+  </div>
+</div>
+
+<!-- ================= DASHBOARD ================= -->
+<div id="view-dashboard" class="view">
+  <header class="dash-header">
+    <div class="id-block">
+      <div class="avatar" id="dash-avatar-initial">R</div>
+      <div>
+        <div class="id-name" id="dash-name">RiotID<span class="tag">#TAG</span></div>
+        <div class="id-meta" id="dash-meta">Diamond 2 · 54 RR</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="source-pill" id="dash-source-pill">Fonte: mock (demo)</span>
+      <span id="dash-updated">Atualizado agora</span>
+      <button class="btn-share" id="btn-open-share">Compartilhar perfil</button>
+    </div>
+  </header>
+
+  <main class="dash-main">
+    <!-- Playstyle hero -->
+    <section class="section">
+      <div class="style-hero">
+        <div>
+          <div class="style-kicker mono-label" style="text-transform:none;letter-spacing:normal;font-size:13px;">Seu perfil de jogador</div>
+          <h1 class="display style-label" id="playstyle-label">—</h1>
+          <p class="style-rationale" id="playstyle-rationale"></p>
+        </div>
+        <div class="rank-block">
+          <div class="rank-tier display" id="rank-tier">Diamond 2</div>
+          <div class="rank-rr" id="rank-rr">54 RR · Amostra de 40 partidas</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Metrics -->
+    <section class="section">
+      <div class="section-head">
+        <div class="mono-label">Métricas</div>
+      </div>
+      <div class="metric-grid" id="metric-grid"></div>
+      <div class="unavailable-note" id="unavailable-note"></div>
+    </section>
+
+    <!-- Radar + AI -->
+    <section class="section two-col">
+      <div class="panel">
+        <div class="panel-title">
+          <h3>Índices de estilo</h3>
+          <span class="tag-note">índices internos</span>
+        </div>
+        <div id="radar-holder"></div>
+      </div>
+
+      <div class="panel ai-block">
+        <div class="panel-title">
+          <h3>Análise da IA</h3>
+          <span class="tag-note">simulado</span>
+        </div>
+        <p id="ai-summary"></p>
+        <div class="ai-sub">Pontos fortes</div>
+        <ul class="ai-list" id="ai-strengths"></ul>
+        <div class="ai-sub">Pontos de atenção</div>
+        <ul class="ai-list" id="ai-weaknesses"></ul>
+        <p id="ai-trend" style="color:var(--ink-dim);"></p>
+        <div class="confidence-line" id="ai-confidence"></div>
+      </div>
+    </section>
+
+    <!-- Evolution -->
+    <section class="section">
+      <div class="panel">
+        <div class="panel-title" style="flex-wrap:wrap; gap:10px;">
+          <h3>Evolução</h3>
+          <div class="trend-toolbar" id="trend-window-toolbar"></div>
+        </div>
+        <div class="metric-toggle" id="trend-metric-toggle"></div>
+        <div id="trend-chart-holder"></div>
+      </div>
+    </section>
+
+    <!-- Agents -->
+    <section class="section">
+      <div class="section-head"><div class="mono-label">Agentes</div></div>
+      <div class="badge-row" id="agent-badges"></div>
+      <div class="panel" style="overflow-x:auto;">
+        <table class="agent-table" id="agent-table"></table>
+      </div>
+    </section>
+
+    <!-- Maps -->
+    <section class="section">
+      <div class="section-head"><div class="mono-label">Mapas</div></div>
+      <div class="map-grid" id="map-grid"></div>
+    </section>
+
+    <p class="footer-note">VALO INSIGHT — demonstração de produto. Dados simulados para fins de visualização.</p>
+  </main>
+</div>
+
+<!-- ================= SHARE MODAL ================= -->
+<div id="share-overlay">
+  <div class="share-card">
+    <button class="share-close" id="share-close">✕</button>
+    <div class="share-avatar" id="share-avatar-initial">R</div>
+    <div class="id-name" id="share-name" style="justify-content:center;">RiotID<span class="tag">#TAG</span></div>
+    <div class="share-rank" id="share-rank">Diamond 2</div>
+    <div class="share-style" id="share-style">DUELIST CARRY</div>
+    <div class="share-grid">
+      <div><div class="label">K/D</div><div class="val" id="share-kd">—</div></div>
+      <div><div class="label">ACS</div><div class="val" id="share-acs">—</div></div>
+      <div><div class="label">Win Rate</div><div class="val" id="share-wr">—</div></div>
+    </div>
+    <div class="share-grid2">
+      <div><div class="label">Main Agent</div><div class="val" id="share-agent">—</div></div>
+      <div><div class="label">Mapa Principal</div><div class="val" id="share-map">—</div></div>
+    </div>
+    <button class="btn-copy" id="btn-copy-link">COPIAR LINK</button>
+    <div class="copied-toast" id="copied-toast"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Mock data generation — mirrors backend logic (services/metrics.ts,
+// styleAnalysis.ts) but runs entirely client-side for this visual demo.
+// No real Riot/Anthropic calls happen here.
+// ============================================================
+
+function seededRandom(seed) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
+  return function() {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+function hashStr(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) { h = (h * 31 + str.charCodeAt(i)) | 0; }
+  return Math.abs(h) || 1;
+}
+
+const AGENTS = ["Jett","Reyna","Omen","Killjoy","Sova","Sage","Raze"];
+const MAPS = ["Ascent","Bind","Haven","Icebox","Lotus","Pearl"];
+
+function generateMatches(rand, count) {
+  const matches = [];
+  for (let i = 0; i < count; i++) {
+    const won = rand() > 0.46;
+    const kills = 8 + Math.floor(rand() * 18);
+    const deaths = 8 + Math.floor(rand() * 10);
+    const assists = Math.floor(rand() * 9);
+    const firstKills = Math.floor(rand() * 5);
+    const firstDeaths = Math.floor(rand() * 4);
+    matches.push({
+      map: MAPS[Math.floor(rand() * MAPS.length)],
+      agent: AGENTS[Math.floor(rand() * AGENTS.length)],
+      won,
+      roundsWon: won ? 13 : 6 + Math.floor(rand() * 5),
+      roundsLost: won ? 6 + Math.floor(rand() * 5) : 13,
+      kills, deaths, assists,
+      acs: 160 + Math.floor(rand() * 160),
+      adr: 110 + Math.floor(rand() * 90),
+      kast: 55 + Math.floor(rand() * 32),
+      hs: 12 + Math.floor(rand() * 28),
+      firstKills, firstDeaths,
+      clutchPlayed: rand() > 0.55 ? 1 : 0,
+      clutchWon: rand() > 0.75 ? 1 : 0,
+    });
+  }
+  return matches;
+}
+
+function avg(arr) { return arr.length ? Math.round((arr.reduce((a,b)=>a+b,0)/arr.length)*10)/10 : null; }
+
+function aggregate(matches) {
+  if (matches.length === 0) return null;
+  const kills = matches.reduce((s,m)=>s+m.kills,0);
+  const deaths = matches.reduce((s,m)=>s+m.deaths,0);
+  const assists = matches.reduce((s,m)=>s+m.assists,0);
+  const wins = matches.filter(m=>m.won).length;
+  const roundsWon = matches.reduce((s,m)=>s+m.roundsWon,0);
+  const roundsLost = matches.reduce((s,m)=>s+m.roundsLost,0);
+  return {
+    n: matches.length,
+    kd: deaths > 0 ? Math.round((kills/deaths)*100)/100 : kills,
+    acs: avg(matches.map(m=>m.acs)),
+    adr: avg(matches.map(m=>m.adr)),
+    kast: avg(matches.map(m=>m.kast)),
+    hs: avg(matches.map(m=>m.hs)),
+    firstKills: matches.reduce((s,m)=>s+m.firstKills,0),
+    firstDeaths: matches.reduce((s,m)=>s+m.firstDeaths,0),
+    kills, deaths, assists,
+    winRate: Math.round((wins/matches.length)*1000)/10,
+    roundsPlayed: roundsWon + roundsLost,
+  };
+}
+
+function groupBy(matches, key) {
+  const groups = {};
+  matches.forEach(m => { (groups[m[key]] = groups[m[key]] || []).push(m); });
+  return Object.entries(groups).map(([name, ms]) => ({ name, ...aggregate(ms) }))
+    .sort((a,b) => b.n - a.n);
+}
+
+function clamp(n) { return Math.max(0, Math.min(100, Math.round(n))); }
+
+function computeStyle(matches, overall) {
+  const fe = overall.firstKills + overall.firstDeaths;
+  const entry = fe > 0 ? clamp((overall.firstKills/fe)*100) : 50;
+  const aggression = clamp((overall.acs/300)*100);
+  const aim = clamp((overall.hs/35)*100);
+  const survival = clamp((overall.kd/1.5)*100);
+  const utility = overall.kills > 0 ? clamp((overall.assists/overall.kills)*100) : 50;
+  const clutchPlayed = matches.filter(m=>m.clutchPlayed>0).length;
+  const clutchWon = matches.reduce((s,m)=>s+m.clutchWon,0);
+  const clutch = clutchPlayed > 0 ? clamp((clutchWon/clutchPlayed)*100) : 40;
+  const trading = overall.deaths > 0 ? clamp(((overall.deaths-overall.firstDeaths)/overall.deaths)*100) : 50;
+  const acsVals = matches.map(m=>m.acs);
+  const mean = acsVals.reduce((a,b)=>a+b,0)/acsVals.length;
+  const variance = acsVals.reduce((s,v)=>s+(v-mean)**2,0)/acsVals.length;
+  const consistency = mean > 0 ? clamp(100 - (Math.sqrt(variance)/mean)*100) : 50;
+  const teamImpact = clamp(aggression*0.5 + utility*0.5);
+  return { entry, aggression, aim, survival, utility, clutch, trading, consistency, teamImpact };
+}
+
+function classifyPlaystyle(idx) {
+  const candidates = [
+    { label:"AGGRESSIVE ENTRY", score: idx.entry*0.6+idx.aggression*0.4,
+      rationale:"Alta taxa de entry kills combinada com um ACS elevado nos confrontos iniciais do round." },
+    { label:"DUELIST CARRY", score: idx.aim*0.5+idx.aggression*0.3+idx.clutch*0.2,
+      rationale:"Mira consistente e impacto acima da média em situações de clutch." },
+    { label:"TACTICAL CONTROLLER", score: idx.utility*0.6+idx.consistency*0.4,
+      rationale:"Uso elevado de utilidade combinado com desempenho estável entre partidas." },
+    { label:"CONSISTENT FLEX", score: idx.consistency*0.7+(100-Math.abs(idx.entry-50))*0.3,
+      rationale:"Baixa variação de desempenho e participação equilibrada em diferentes fases do round." },
+    { label:"UTILITY SPECIALIST", score: idx.utility*0.7+idx.trading*0.3,
+      rationale:"Forte contribuição em assistências e trocas de kills em vez de aberturas isoladas." },
+  ];
+  return candidates.sort((a,b)=>b.score-a.score)[0];
+}
+
+// ---------- SVG radar chart ----------
+function renderRadar(idx) {
+  const dims = [
+    ["Entry", idx.entry], ["Aim", idx.aim], ["Aggression", idx.aggression],
+    ["Utility", idx.utility], ["Survival", idx.survival], ["Trading", idx.trading],
+    ["Clutch", idx.clutch], ["Consistency", idx.consistency], ["Team Impact", idx.teamImpact],
+  ];
+  const n = dims.length, cx = 170, cy = 160, R = 118;
+  const angle = (i) => (Math.PI * 2 * i) / n - Math.PI / 2;
+  const point = (i, r) => [cx + r * Math.cos(angle(i)), cy + r * Math.sin(angle(i))];
+
+  let gridRings = "";
+  [0.25, 0.5, 0.75, 1].forEach(f => {
+    const pts = dims.map((_, i) => point(i, R * f).join(",")).join(" ");
+    gridRings += `<polygon points="${pts}" fill="none" stroke="#23252f" stroke-width="1"/>`;
+  });
+  let spokes = "";
+  dims.forEach((_, i) => {
+    const [x,y] = point(i, R);
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#23252f" stroke-width="1"/>`;
+  });
+  const dataPts = dims.map((d,i) => point(i, (d[1]/100)*R).join(",")).join(" ");
+  let labels = "";
+  dims.forEach((d,i) => {
+    const [x,y] = point(i, R + 22);
+    labels += `<text x="${x}" y="${y}" font-size="10.5" fill="#9a9da8" text-anchor="middle" dominant-baseline="middle">${d[0]}</text>`;
+  });
+
+  return `<svg viewBox="0 0 340 320" width="100%" height="300">
+    ${gridRings}${spokes}
+    <polygon points="${dataPts}" fill="#ff3b4e" fill-opacity="0.32" stroke="#ff3b4e" stroke-width="2"/>
+    ${labels}
+  </svg>`;
+}
+
+// ---------- SVG trend line chart ----------
+function renderTrend(points, metric) {
+  const w = 640, h = 220, pad = 30;
+  const vals = points.map(p => p[metric]);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = (max - min) || 1;
+  const stepX = (w - pad*2) / (points.length - 1 || 1);
+  const coords = points.map((p, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - ((p[metric] - min) / range) * (h - pad*2);
+    return [x, y];
+  });
+  const path = coords.map((c,i) => (i===0?"M":"L") + c[0].toFixed(1) + "," + c[1].toFixed(1)).join(" ");
+  const areaPath = path + ` L${coords[coords.length-1][0]},${h-pad} L${coords[0][0]},${h-pad} Z`;
+  let gridLines = "";
+  for (let i=0;i<=3;i++) {
+    const y = pad + (i/3)*(h-pad*2);
+    gridLines += `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="#1a1b23" stroke-width="1"/>`;
+  }
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="220" preserveAspectRatio="none">
+    ${gridLines}
+    <path d="${areaPath}" fill="#ff3b4e" fill-opacity="0.08" stroke="none"/>
+    <path d="${path}" fill="none" stroke="#ff3b4e" stroke-width="2.2"/>
+  </svg>`;
+}
+
+// ============================================================
+// App state + rendering
+// ============================================================
+let STATE = null;
+
+function buildProfile(name, tag) {
+  const seed = hashStr(name.toLowerCase() + "#" + tag.toLowerCase());
+  const rand = seededRandom(seed);
+  const matches = generateMatches(rand, 40);
+  const overall = aggregate(matches);
+  const byAgent = groupBy(matches, "agent");
+  const byMap = groupBy(matches, "map");
+  const style = computeStyle(matches, overall);
+  const playstyle = classifyPlaystyle(style);
+  const ranks = ["Iron 3","Bronze 2","Silver 1","Gold 3","Platinum 2","Diamond 1","Diamond 2","Ascendant 1","Immortal 1"];
+  const rank = ranks[Math.floor(rand()*ranks.length)];
+  const rr = Math.floor(rand()*100);
+  return { name, tag, matches, overall, byAgent, byMap, style, playstyle, rank, rr };
+}
+
+function generateAIText(p) {
+  const top = [...p.byAgent].sort((a,b)=>b.n-a.n)[0];
+  const topMap = [...p.byMap].sort((a,b)=>b.winRate-a.winRate)[0];
+  const strengths = [];
+  const weaknesses = [];
+  if (p.style.entry > 60) strengths.push("Criação de espaço consistente através de entry kills.");
+  if (p.style.aim > 60) strengths.push("Precisão acima da média, refletida na taxa de headshot.");
+  if (p.style.utility > 55) strengths.push("Boa contribuição em assistências e uso de utilidade.");
+  if (p.style.consistency > 60) strengths.push("Desempenho estável de ACS entre partidas.");
+  if (strengths.length === 0) strengths.push("Participação equilibrada nas fases do round, sem um pico isolado dominante.");
+
+  if (p.style.survival < 50) weaknesses.push("Sobrevivência após o primeiro contato abaixo do ideal.");
+  if (p.style.trading < 45) weaknesses.push("Poucas mortes ocorrem em situação de troca — espaço para melhorar o trading.");
+  if (p.style.clutch < 45) weaknesses.push("Taxa de conversão em situações de clutch ainda inconsistente.");
+  if (weaknesses.length === 0) weaknesses.push("Nenhum ponto crítico isolado — foco em manter a consistência atual.");
+
+  return {
+    summary: `Ao longo das ${p.overall.n} partidas analisadas, o perfil indica um estilo ${p.playstyle.label.toLowerCase()}, com ACS médio de ${p.overall.acs} e taxa de vitória de ${p.overall.winRate}%.`,
+    strengths, weaknesses,
+    trend: `Seu agente mais utilizado foi ${top.name} (${top.n} partidas), e seu melhor mapa em taxa de vitória foi ${topMap.name} (${topMap.winRate}%).`,
+    confidence: p.overall.n >= 30 ? "medium" : "low",
+  };
+}
+
+const LOADING_MESSAGES = [
+  "Conectando ao seu perfil…", "Analisando suas partidas…",
+  "Calculando padrões…", "Comparando desempenho…", "Gerando seu perfil…",
+];
+
+function showView(id) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+let lastAttempt = null; // { name, tag } — used by the "ver demo" fallback buttons
+
+document.getElementById("analyze-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const name = document.getElementById("input-name").value.trim();
+  const tag = document.getElementById("input-tag").value.trim();
+  const errEl = document.getElementById("form-error");
+  if (!name || !tag) {
+    errEl.textContent = "Informe seu Riot ID e sua Tag.";
+    errEl.style.display = "block";
+    return;
+  }
+  errEl.style.display = "none";
+  lastAttempt = { name, tag };
+  runRealSync(name, tag);
+});
+
+document.getElementById("btn-demo-mode").addEventListener("click", () => {
+  const name = document.getElementById("input-name").value.trim() || "Jogador";
+  const tag = document.getElementById("input-tag").value.trim() || "0000";
+  lastAttempt = { name, tag };
+  runDemoFlow(name, tag);
+});
+
+document.getElementById("btn-status-demo").addEventListener("click", () => {
+  if (lastAttempt) runDemoFlow(lastAttempt.name, lastAttempt.tag);
+});
+document.getElementById("btn-status-back").addEventListener("click", () => showView("view-home"));
+
+function startLoadingAnimation() {
+  showView("view-loading");
+  let msgIndex = 0;
+  const msgEl = document.getElementById("loading-msg");
+  msgEl.textContent = LOADING_MESSAGES[0];
+  return setInterval(() => {
+    msgIndex = (msgIndex + 1) % LOADING_MESSAGES.length;
+    msgEl.textContent = LOADING_MESSAGES[msgIndex];
+  }, 500);
+}
+
+function runDemoFlow(name, tag) {
+  const interval = startLoadingAnimation();
+  setTimeout(() => {
+    clearInterval(interval);
+    const profile = buildProfile(name, tag);
+    profile.sourceLabel = "mock (demonstração)";
+    renderDashboard(profile);
+    showView("view-dashboard");
+  }, 1400);
+}
+
+async function runRealSync(name, tag) {
+  const interval = startLoadingAnimation();
+  const errEl = document.getElementById("form-error");
+
+  let data, res;
+  try {
+    res = await fetch("/api/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gameName: name, tagLine: tag }),
+    });
+    data = await res.json().catch(() => ({}));
+  } catch (err) {
+    clearInterval(interval);
+    showView("view-home");
+    errEl.textContent = "Não foi possível contatar a função /api/sync (erro de rede).";
+    errEl.style.display = "block";
+    return;
+  }
+
+  clearInterval(interval);
+
+  if (!res.ok) {
+    showView("view-home");
+    const messages = {
+      MISSING_RIOT_KEY: "RIOT_API_KEY não está configurada nesta implantação da Vercel (Settings → Environment Variables).",
+      RIOT_KEY_INVALID: "A Riot recusou a chave. Chaves pessoais de developer.riotgames.com expiram a cada 24h — gere uma nova.",
+    };
+    errEl.textContent = messages[data.code] || data.error || `Erro ${res.status} ao consultar o servidor.`;
+    errEl.style.display = "block";
+    return;
+  }
+
+  // Real Riot connection worked, but match history may be blocked (expected
+  // with a personal/dev key — see README-DEPLOY.md).
+  if (!data.matches || data.matches.length === 0) {
+    renderStatusView(data);
+    showView("view-status");
+    return;
+  }
+
+  const profile = mapApiResponseToProfile(data);
+  renderDashboard(profile);
+  showView("view-dashboard");
+}
+
+function renderStatusView(data) {
+  const statusMessages = {
+    riot_production_required:
+      "Identidade confirmada direto na Riot. O histórico de partidas está bloqueado porque val-match-v1 exige uma chave de <b>produção aprovada</b> — uma chave pessoal sempre retorna 403 aqui. Solicite produção em developer.riotgames.com, ou ative o fallback HenrikDev em README-DEPLOY.md.",
+    riot_empty_history: "Identidade confirmada, mas a Riot não retornou partidas recentes para esta conta.",
+    riot_error: "Identidade confirmada, mas houve um erro ao buscar o histórico de partidas na Riot.",
+    henrikdev_empty: "Identidade confirmada. O fallback HenrikDev está ativo mas não retornou partidas para esta conta.",
+  };
+  document.getElementById("status-badge").textContent = data.matchDataStatus || "bloqueado";
+  document.getElementById("status-body").innerHTML = `
+    <p><b>${data.identity.gameName}#${data.identity.tagLine}</b> — PUUID confirmado pela Riot (${data.identity.puuid.slice(0,8)}…).</p>
+    <p>Catálogo oficial carregado: ${data.contentCatalog.agentsCount} agentes, ${data.contentCatalog.mapsCount} mapas (fonte: ${data.contentCatalog.source}).</p>
+    <p>${statusMessages[data.matchDataStatus] || "Histórico de partidas indisponível no momento."}</p>
+    ${data.henrikDebug ? `<p style="font-family:monospace;font-size:11px;color:var(--ink-faint);">debug henrikdev: ${JSON.stringify(data.henrikDebug)}</p>` : ""}
+  `;
+}
+
+function mapApiResponseToProfile(data) {
+  return {
+    name: data.identity.gameName,
+    tag: data.identity.tagLine,
+    matches: data.matches,
+    overall: data.overall,
+    byAgent: data.byAgent,
+    byMap: data.byMap,
+    style: data.styleIndices,
+    playstyle: data.playstyle || { label: "AMOSTRA INSUFICIENTE", rationale: "São necessárias pelo menos 5 partidas para classificar o estilo de jogo." },
+    rank: "Indisponível (requer produção)",
+    rr: null,
+    sourceLabel: data.matchDataStatus === "ok_henrikdev" ? "riot + henrikdev" : "riot (real)",
+    aiAnalysisReal: data.aiAnalysis,
+  };
+}
+
+let currentWindow = 20;
+let currentMetric = "acs";
+
+function renderDashboard(p) {
+  STATE = p;
+  const initial = p.name.charAt(0).toUpperCase();
+  document.getElementById("dash-avatar-initial").textContent = initial;
+  document.getElementById("dash-name").innerHTML = `${p.name}<span class="tag">#${p.tag}</span>`;
+  document.getElementById("dash-meta").textContent = p.rr != null ? `${p.rank} · ${p.rr} RR` : p.rank;
+  document.getElementById("dash-updated").textContent = "Atualizado agora";
+  document.getElementById("dash-source-pill").textContent = `Fonte: ${p.sourceLabel || "mock (demo)"}`;
+
+  document.getElementById("playstyle-label").textContent = p.playstyle.label;
+  document.getElementById("playstyle-rationale").textContent = p.playstyle.rationale;
+  document.getElementById("rank-tier").textContent = p.rank;
+  document.getElementById("rank-rr").textContent = p.rr != null
+    ? `${p.rr} RR · Amostra de ${p.overall.n} partidas`
+    : `Amostra de ${p.overall.n} partidas`;
+
+  // metrics
+  const o = p.overall;
+  const metrics = [
+    ["K/D", o.kd, ""], ["ACS", o.acs, ""], ["ADR", o.adr, ""], ["KAST", o.kast, "%"],
+    ["Headshot", o.hs, "%"], ["Win Rate", o.winRate, "%"], ["First Kills", o.firstKills, ""],
+    ["First Deaths", o.firstDeaths, ""], ["Kills", o.kills, ""], ["Deaths", o.deaths, ""],
+    ["Assists", o.assists, ""], ["Rounds", o.roundsPlayed, ""],
+  ];
+  document.getElementById("metric-grid").innerHTML = metrics.map(([label,val,unit]) => `
+    <div class="metric-card">
+      <div class="mono-label">${label}</div>
+      <div class="metric-value">${val}<span class="unit">${unit}</span></div>
+    </div>`).join("");
+  document.getElementById("unavailable-note").textContent = "";
+
+  // radar
+  document.getElementById("radar-holder").innerHTML = renderRadar(p.style);
+
+  // AI
+  if (p.aiAnalysisReal && !p.aiAnalysisReal.error) {
+    const ai = p.aiAnalysisReal;
+    document.getElementById("ai-summary").textContent = ai.player_summary || "";
+    document.getElementById("ai-strengths").innerHTML = (ai.strengths || []).map(s=>`<li>${s}</li>`).join("");
+    document.getElementById("ai-weaknesses").innerHTML = (ai.weaknesses || []).map(s=>`<li>${s}</li>`).join("");
+    document.getElementById("ai-trend").textContent = ai.recent_trends || "";
+    document.getElementById("ai-confidence").textContent = `Confiança: ${ai.confidence || "—"} · Gerado pelo Claude a partir dos seus dados reais.` +
+      (ai.data_limitations?.length ? ` Limitações: ${ai.data_limitations.join("; ")}` : "");
+  } else if (p.aiAnalysisReal && p.aiAnalysisReal.error) {
+    document.getElementById("ai-summary").textContent = p.aiAnalysisReal.error;
+    document.getElementById("ai-strengths").innerHTML = "";
+    document.getElementById("ai-weaknesses").innerHTML = "";
+    document.getElementById("ai-trend").textContent = "";
+    document.getElementById("ai-confidence").textContent = "Verifique ANTHROPIC_API_KEY nas variáveis de ambiente da Vercel.";
+  } else if (p.style) {
+    const ai = generateAIText(p);
+    document.getElementById("ai-summary").textContent = ai.summary;
+    document.getElementById("ai-strengths").innerHTML = ai.strengths.map(s=>`<li>${s}</li>`).join("");
+    document.getElementById("ai-weaknesses").innerHTML = ai.weaknesses.map(s=>`<li>${s}</li>`).join("");
+    document.getElementById("ai-trend").textContent = ai.trend;
+    document.getElementById("ai-confidence").textContent = `Confiança: ${ai.confidence} · Análise gerada a partir de dados simulados (demonstração).`;
+  } else {
+    document.getElementById("ai-summary").textContent = "Dados insuficientes para gerar uma análise (mínimo de 5 partidas).";
+    document.getElementById("ai-strengths").innerHTML = "";
+    document.getElementById("ai-weaknesses").innerHTML = "";
+    document.getElementById("ai-trend").textContent = "";
+    document.getElementById("ai-confidence").textContent = "";
+  }
+
+  // trend toolbar
+  const windowToolbar = document.getElementById("trend-window-toolbar");
+  windowToolbar.innerHTML = [5,10,20,40].map(w =>
+    `<button class="toolbar-btn ${w===currentWindow?'active':''}" data-window="${w}">Últimas ${w}</button>`
+  ).join("");
+  const metricToggle = document.getElementById("trend-metric-toggle");
+  metricToggle.innerHTML = ["acs","adr","kd","hs"].map(m =>
+    `<button class="${m===currentMetric?'active':''}" data-metric="${m}">${m.toUpperCase()}</button>`
+  ).join("");
+  renderTrendChart(p);
+
+  windowToolbar.querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => { currentWindow = Number(btn.dataset.window); renderDashboard(p); };
+  });
+  metricToggle.querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => { currentMetric = btn.dataset.metric; renderDashboard(p); };
+  });
+
+  // agents
+  const sortedAgents = [...p.byAgent].sort((a,b)=>b.n-a.n);
+  const consistent = [...sortedAgents].sort((a,b)=>(b.winRate||0)-(a.winRate||0))[0];
+  const aggressive = [...sortedAgents].sort((a,b)=>(b.acs||0)-(a.acs||0))[0];
+  const impact = [...sortedAgents].sort((a,b)=>((b.acs||0)+(b.assists||0))-((a.acs||0)+(a.assists||0)))[0];
+  document.getElementById("agent-badges").innerHTML = `
+    <div class="badge-card"><div class="mono-label">Mais consistente</div><div class="val">${consistent.name}</div></div>
+    <div class="badge-card"><div class="mono-label">Mais agressivo</div><div class="val">${aggressive.name}</div></div>
+    <div class="badge-card"><div class="mono-label">Maior impacto</div><div class="val">${impact.name}</div></div>
+  `;
+  document.getElementById("agent-table").innerHTML = `
+    <thead><tr>
+      <th>Agente</th><th>Partidas</th><th>Win Rate</th><th>K/D</th><th>ACS</th><th>ADR</th><th>HS%</th>
+    </tr></thead>
+    <tbody>
+      ${sortedAgents.map(a => `
+        <tr>
+          <td class="name">${a.name}</td>
+          <td>${a.n}</td>
+          <td>${a.n < 5 ? '<span style="color:var(--ink-faint)">amostra pequena</span>' : a.winRate + '%'}</td>
+          <td>${a.kd}</td><td>${a.acs}</td><td>${a.adr}</td><td>${a.hs}</td>
+        </tr>`).join("")}
+    </tbody>`;
+
+  // maps
+  document.getElementById("map-grid").innerHTML = p.byMap.map(m => `
+    <div class="map-card">
+      <div class="map-card-head"><h4>${m.name}</h4><span class="tag-note">${m.n} partidas</span></div>
+      <div class="map-stat-row"><span>Win Rate</span><b>${m.winRate}%</b></div>
+      <div class="map-stat-row"><span>K/D</span><b>${m.kd}</b></div>
+      <div class="map-stat-row"><span>ACS</span><b>${m.acs}</b></div>
+      <div class="map-stat-row"><span>ADR</span><b>${m.adr}</b></div>
+      ${m.n < 5 ? '<div class="low-sample">Amostra pequena — tendência não conclusiva.</div>' : ''}
+    </div>`).join("");
+
+  // share modal data
+  document.getElementById("share-avatar-initial").textContent = initial;
+  document.getElementById("share-name").innerHTML = `${p.name}<span class="tag">#${p.tag}</span>`;
+  document.getElementById("share-rank").textContent = p.rank;
+  document.getElementById("share-style").textContent = p.playstyle.label;
+  document.getElementById("share-kd").textContent = o.kd;
+  document.getElementById("share-acs").textContent = o.acs;
+  document.getElementById("share-wr").textContent = o.winRate + "%";
+  document.getElementById("share-agent").textContent = sortedAgents[0]?.name || "—";
+  document.getElementById("share-map").textContent = [...p.byMap].sort((a,b)=>b.winRate-a.winRate)[0]?.name || "—";
+}
+
+function renderTrendChart(p) {
+  const n = Math.min(currentWindow, p.matches.length);
+  const recent = p.matches.slice(0, n).slice().reverse().map(m => ({
+    acs: m.acs, adr: m.adr, kd: m.deaths>0?Math.round((m.kills/m.deaths)*100)/100:m.kills, hs: m.hs,
+  }));
+  document.getElementById("trend-chart-holder").innerHTML = renderTrend(recent, currentMetric);
+}
+
+// share modal wiring
+document.getElementById("btn-open-share").addEventListener("click", () => {
+  document.getElementById("share-overlay").classList.add("active");
+});
+document.getElementById("share-close").addEventListener("click", () => {
+  document.getElementById("share-overlay").classList.remove("active");
+});
+document.getElementById("share-overlay").addEventListener("click", (e) => {
+  if (e.target.id === "share-overlay") e.currentTarget.classList.remove("active");
+});
+document.getElementById("btn-copy-link").addEventListener("click", async () => {
+  const toast = document.getElementById("copied-toast");
+  try {
+    await navigator.clipboard.writeText(location.href.split("#")[0] + "#/player/" + (STATE ? STATE.name+STATE.tag : ""));
+    toast.textContent = "Link copiado!";
+  } catch(e) {
+    toast.textContent = "Não foi possível copiar automaticamente.";
+  }
+  setTimeout(() => toast.textContent = "", 2500);
+});
+</script>
+</body>
+</html>
