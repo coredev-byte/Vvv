@@ -1,4 +1,4 @@
-// api/sync.js
+já// api/sync.js
 // Vercel Serverless Function (Node runtime). Runs server-side only —
 // this is the ONE place real API keys are used. They must be set as
 // Environment Variables in the Vercel project dashboard, never committed
@@ -125,13 +125,17 @@ export default async function handler(req, res) {
         )}/${encodeURIComponent(tagLine)}?size=10`,
         { headers: { Authorization: HENRIKDEV_API_KEY } }
       );
-      if (hRes.ok) {
-        const hData = await hRes.json();
-        matches = (hData.data || [])
-          .map((m) => normalizeHenrikMatch(m, identity.puuid))
-          .filter(Boolean);
-        matchDataStatus = matches.length > 0 ? "ok_henrikdev" : "henrikdev_empty";
-      }
+  if (hRes.ok) {
+   const hData = await hRes.json();
+   matches = (hData.data || [])
+    .map((m) => normalizeHenrikMatch(m, identity.puuid))
+    .filter(Boolean);
+  matchDataStatus = matches.length > 0 ? "ok_henrikdev" : "henrikdev_empty";
+  global.__debugHenrik = { raw: (hData.data || []).length, kept: matches.length };
+} else {
+  global.__debugHenrik = { httpStatus: hRes.status };
+}
+
     } catch {
       // keep matchDataStatus as riot_production_required if this also fails
     }
